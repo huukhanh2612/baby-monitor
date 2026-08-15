@@ -1,32 +1,52 @@
-let loudState = false;
+import { sendSoundEvent } from "../realtime/sender.js";
 
-const LOUD_THRESHOLD = 50;
-const RESET_THRESHOLD = 30;
+let lastSentTime = 0;
 
-export function detectSoundEvent(level) {
+// Khoảng cách tối thiểu giữa 2 cảnh báo
+const ALERT_COOLDOWN = 3000;
 
-    if (!loudState && level >= LOUD_THRESHOLD) {
+/**
+ * Xử lý khi phát hiện mức âm thanh mới
+ */
+export async function handleSoundEvent(level, eventType) {
 
-        loudState = true;
+    const now = Date.now();
 
-        if (level >= 75) {
-            return {
-                type: "VERY_LOUD_DETECTED",
-                level: Math.round(level),
-                timestamp: new Date().toISOString()
-            };
-        }
-
-        return {
-            type: "LOUD_DETECTED",
-            level: Math.round(level),
-            timestamp: new Date().toISOString()
-        };
+    // Không gửi liên tục khi âm thanh kéo dài
+    if (now - lastSentTime < ALERT_COOLDOWN) {
+        return;
     }
 
-    if (loudState && level <= RESET_THRESHOLD) {
-        loudState = false;
+    // Chỉ gửi cảnh báo khi âm thanh lớn
+    if (eventType !== "LOUD" && eventType !== "VERY_LOUD") {
+        return;
     }
 
-    return null;
+    lastSentTime = now;
+
+    // Tạo ID cho thiết bị
+    let deviceId = localStorage.getItem("baby_monitor_device_id");
+
+    if (!deviceId) {
+        deviceId =
+            "device-" +
+            crypto.randomUUID();
+
+        localStorage.setItem(
+            "baby_monitor_device_id",
+            deviceId
+        );
+    }
+
+    console.log(
+        "Phát hiện âm thanh:",
+        eventType,
+        level
+    );
+
+    await sendSoundEvent(
+        eventType,
+        level,
+        deviceId
+    );
 }
