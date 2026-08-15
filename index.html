@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Baby Monitor</title>
+
+    <link rel="stylesheet" href="css/common.css">
+</head>
+
+<body>
+
+    <main class="container">
+
+        <h1>Baby Monitor</h1>
+
+        <div class="status">
+            <span id="statusDot"></span>
+            <span id="statusText">Chưa bắt đầu</span>
+        </div>
+
+        <button id="startButton">
+            🎤 Bắt đầu lắng nghe
+        </button>
+
+        <section class="audio-card">
+
+            <h2>Mức âm thanh</h2>
+
+            <div class="meter">
+                <div id="volumeBar"></div>
+            </div>
+
+            <div id="volumeValue">
+                0
+            </div>
+
+            <div id="soundLevel">
+                Chưa có dữ liệu
+            </div>
+
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { startMicrophone } from "./js/audio/microphone.js";
+
+        const button = document.getElementById("startButton");
+        const statusText = document.getElementById("statusText");
+        const statusDot = document.getElementById("statusDot");
+
+        button.addEventListener("click", async () => {
+
+            try {
+
+                await startMicrophone();
+
+                statusText.textContent = "Đang lắng nghe";
+                statusDot.classList.add("online");
+
+                button.disabled = true;
+                button.textContent = "🎤 Đang lắng nghe...";
+
+            } catch (error) {
+
+                console.error(error);
+
+                statusText.textContent = "Không thể sử dụng microphone";
+                statusDot.classList.remove("online");
+
+                alert(
+                    "Không thể sử dụng microphone. " +
+                    "Hãy kiểm tra quyền microphone của trình duyệt."
+                );
+
+            }
+
+        });
+    </script>
+
+</body>
+</html>
