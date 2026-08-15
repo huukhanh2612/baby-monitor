@@ -2,6 +2,7 @@
 <html lang="vi">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -15,6 +16,7 @@
         rel="stylesheet"
         href="css/common.css"
     >
+
 </head>
 
 
@@ -25,7 +27,9 @@
         <h1>Baby Monitor</h1>
 
 
-        <!-- TRẠNG THÁI MICROPHONE -->
+        <!-- ==========================================
+             TRẠNG THÁI MICROPHONE
+        =========================================== -->
 
         <div class="status">
 
@@ -38,7 +42,9 @@
         </div>
 
 
-        <!-- NÚT BẮT ĐẦU -->
+        <!-- ==========================================
+             NÚT BẮT ĐẦU
+        =========================================== -->
 
         <button id="startButton">
 
@@ -47,7 +53,9 @@
         </button>
 
 
-        <!-- KHU VỰC ÂM THANH -->
+        <!-- ==========================================
+             KHU VỰC ÂM THANH
+        =========================================== -->
 
         <section class="audio-card">
 
@@ -65,7 +73,7 @@
             </div>
 
 
-            <!-- GIÁ TRỊ 0 - 100 -->
+            <!-- GIÁ TRỊ ÂM THANH -->
 
             <div id="volumeValue">
 
@@ -74,7 +82,7 @@
             </div>
 
 
-            <!-- PHÂN LOẠI ÂM THANH -->
+            <!-- PHÂN LOẠI -->
 
             <div id="soundLevel">
 
@@ -104,239 +112,488 @@
 
 
 
-    <!-- JAVASCRIPT -->
+    <!-- ==========================================
+         JAVASCRIPT
+    =========================================== -->
 
     <script type="module">
 
-    /* ==========================================
-       IMPORT MODULE
-    ========================================== */
 
-    import {
-        startMicrophone
-    } from "./js/audio/microphone.js";
+        /* ==========================================
+           IMPORT MICROPHONE
+        ========================================== */
 
-
-    import {
-        analyzeAudio
-    } from "./js/audio/analyzer.js";
+        import {
+            startMicrophone
+        } from "./js/audio/microphone.js";
 
 
-    /* ==========================================
-       LẤY ELEMENT
-    ========================================== */
+        /* ==========================================
+           IMPORT AUDIO ANALYZER
+        ========================================== */
 
-    const button =
-        document.getElementById(
-            "startButton"
-        );
-
-
-    const statusText =
-        document.getElementById(
-            "statusText"
-        );
+        import {
+            analyzeAudio
+        } from "./js/audio/analyzer.js";
 
 
-    const statusDot =
-        document.getElementById(
-            "statusDot"
-        );
+        /* ==========================================
+           IMPORT REALTIME LISTENER
+        ========================================== */
+
+        import {
+            startSoundListener
+        } from "./js/realtime/listener.js";
 
 
-    const volumeBar =
-        document.getElementById(
-            "volumeBar"
-        );
+
+        /* ==========================================
+           LẤY ELEMENT
+        ========================================== */
+
+        const button =
+            document.getElementById(
+                "startButton"
+            );
 
 
-    const volumeValue =
-        document.getElementById(
-            "volumeValue"
-        );
+        const statusText =
+            document.getElementById(
+                "statusText"
+            );
 
 
-    const soundLevel =
-        document.getElementById(
-            "soundLevel"
-        );
+        const statusDot =
+            document.getElementById(
+                "statusDot"
+            );
 
 
-    const eventStatus =
-        document.getElementById(
-            "eventStatus"
-        );
+        const volumeBar =
+            document.getElementById(
+                "volumeBar"
+            );
 
 
-    /* ==========================================
-       NHẬN DỮ LIỆU TỪ analyzer.js
-    ========================================== */
-
-    window.onAudioLevel =
-        function (level, eventType) {
-
-            /* ------------------------------
-               CẬP NHẬT THANH ÂM LƯỢNG
-            ------------------------------ */
-
-            volumeBar.style.width =
-                `${level}%`;
+        const volumeValue =
+            document.getElementById(
+                "volumeValue"
+            );
 
 
-            /* ------------------------------
-               HIỂN THỊ MỨC 0 - 100
-            ------------------------------ */
-
-            volumeValue.textContent =
-                level;
+        const soundLevel =
+            document.getElementById(
+                "soundLevel"
+            );
 
 
-            /* ------------------------------
-               PHÂN LOẠI ÂM THANH
-            ------------------------------ */
-
-            let classification = "LOW";
-
-
-            if (level >= 70) {
-
-                classification =
-                    "VERY_LOUD";
-
-            }
-
-            else if (level >= 45) {
-
-                classification =
-                    "LOUD";
-
-            }
-
-            else if (level >= 25) {
-
-                classification =
-                    "NORMAL";
-
-            }
+        const eventStatus =
+            document.getElementById(
+                "eventStatus"
+            );
 
 
-            soundLevel.textContent =
-                classification;
 
+        /* ==========================================
+           XIN QUYỀN THÔNG BÁO
+        ========================================== */
 
-            /* ==================================
-               HIỂN THỊ EVENT
-            ================================== */
+        async function requestNotificationPermission() {
+
+            /* --------------------------------------
+               KIỂM TRA TRÌNH DUYỆT
+            -------------------------------------- */
 
             if (
-                eventType === "LOUD" ||
-                eventType === "VERY_LOUD"
+                !("Notification" in window)
             ) {
 
-                eventStatus.textContent =
-                    `⚠️ ${eventType}_DETECTED`;
-
-
-                console.log(
-                    "SOUND EVENT:",
-                    eventType,
-                    level
+                console.warn(
+                    "Trình duyệt không hỗ trợ thông báo"
                 );
 
-            }
-
-        };
-
-
-    /* ==========================================
-       BẮT ĐẦU MICROPHONE
-    ========================================== */
-
-    button.addEventListener(
-        "click",
-        async () => {
-
-            try {
-
-                /* ------------------------------
-                   KHỞI ĐỘNG MICROPHONE
-                ------------------------------ */
-
-                const {
-                    analyser
-                } =
-                    await startMicrophone();
-
-
-                /* ------------------------------
-                   CẬP NHẬT TRẠNG THÁI
-                ------------------------------ */
-
-                statusText.textContent =
-                    "Đang lắng nghe";
-
-
-                statusDot.classList.add(
-                    "online"
-                );
-
-
-                button.disabled =
-                    true;
-
-
-                button.textContent =
-                    "🎤 Đang lắng nghe...";
-
-
-                /* ------------------------------
-                   BẮT ĐẦU PHÂN TÍCH
-                ------------------------------ */
-
-                analyzeAudio(
-                    analyser
-                );
-
+                return false;
             }
 
 
-            catch (error) {
+            /* --------------------------------------
+               ĐÃ CHO PHÉP
+            -------------------------------------- */
 
-                console.error(
-                    "Microphone error:",
-                    error
+            if (
+                Notification.permission ===
+                "granted"
+            ) {
+
+                return true;
+            }
+
+
+            /* --------------------------------------
+               ĐÃ CHẶN
+            -------------------------------------- */
+
+            if (
+                Notification.permission ===
+                "denied"
+            ) {
+
+                console.warn(
+                    "Thông báo đang bị chặn"
+                );
+
+                return false;
+            }
+
+
+            /* --------------------------------------
+               XIN QUYỀN
+            -------------------------------------- */
+
+            const permission =
+                await Notification.requestPermission();
+
+
+            return (
+                permission === "granted"
+            );
+        }
+
+
+
+        /* ==========================================
+           HIỂN THỊ CẢNH BÁO
+        ========================================== */
+
+        function showSoundNotification(
+            soundEvent
+        ) {
+
+            if (!soundEvent) {
+                return;
+            }
+
+
+            /* --------------------------------------
+               LẤY MỨC ÂM THANH
+            -------------------------------------- */
+
+            const level =
+                Math.round(
+                    Number(
+                        soundEvent.level
+                    )
                 );
 
 
-                statusText.textContent =
-                    "Không thể sử dụng microphone";
+            /* --------------------------------------
+               LẤY LOẠI EVENT
+            -------------------------------------- */
+
+            const eventType =
+                soundEvent.event_type ||
+                soundEvent.type ||
+                "LOUD";
 
 
-                statusDot.classList.remove(
-                    "online"
-                );
+            /* --------------------------------------
+               CONSOLE
+            -------------------------------------- */
+
+            console.log(
+                "CẢNH BÁO ÂM THANH:",
+                eventType,
+                level
+            );
 
 
-                button.disabled =
-                    false;
+            /* --------------------------------------
+               HIỂN THỊ TRÊN WEBSITE
+            -------------------------------------- */
+
+            eventStatus.textContent =
+                `⚠️ ${eventType}_DETECTED`;
 
 
-                button.textContent =
-                    "🎤 Thử lại";
+            /* --------------------------------------
+               HIỂN THỊ NOTIFICATION
+            -------------------------------------- */
 
+            if (
+                "Notification" in window &&
+                Notification.permission ===
+                "granted"
+            ) {
 
-                alert(
-                    "Không thể sử dụng microphone.\n\n" +
-                    "Hãy kiểm tra quyền microphone " +
-                    "của trình duyệt."
+                new Notification(
+                    "⚠️ BABY MONITOR",
+                    {
+
+                        body:
+                            `Phát hiện âm thanh lớn\n` +
+                            `Mức âm thanh: ${level}`,
+
+                        tag:
+                            "baby-monitor-sound",
+
+                        requireInteraction:
+                            true
+                    }
                 );
 
             }
 
         }
-    );
 
-</script>
+
+
+        /* ==========================================
+           NHẬN MỨC ÂM THANH TỪ ANALYZER
+        ========================================== */
+
+        window.onAudioLevel =
+            function (
+                level,
+                eventType
+            ) {
+
+                /* ----------------------------------
+                   GIỚI HẠN 0 - 100
+                ---------------------------------- */
+
+                level =
+                    Math.max(
+                        0,
+                        Math.min(
+                            100,
+                            Math.round(
+                                level
+                            )
+                        )
+                    );
+
+
+                /* ----------------------------------
+                   THANH ÂM LƯỢNG
+                ---------------------------------- */
+
+                volumeBar.style.width =
+                    `${level}%`;
+
+
+                /* ----------------------------------
+                   GIÁ TRỊ
+                ---------------------------------- */
+
+                volumeValue.textContent =
+                    level;
+
+
+                /* ----------------------------------
+                   PHÂN LOẠI
+                ---------------------------------- */
+
+                let classification =
+                    "LOW";
+
+
+                if (
+                    level >= 70
+                ) {
+
+                    classification =
+                        "VERY_LOUD";
+
+                }
+
+                else if (
+                    level >= 45
+                ) {
+
+                    classification =
+                        "LOUD";
+
+                }
+
+                else if (
+                    level >= 25
+                ) {
+
+                    classification =
+                        "NORMAL";
+                }
+
+
+                soundLevel.textContent =
+                    classification;
+
+
+                /* ----------------------------------
+                   HIỂN THỊ EVENT
+                ---------------------------------- */
+
+                if (
+                    eventType === "LOUD" ||
+                    eventType === "VERY_LOUD"
+                ) {
+
+                    eventStatus.textContent =
+                        `⚠️ ${eventType}_DETECTED`;
+
+
+                    console.log(
+                        "SOUND EVENT:",
+                        eventType,
+                        level
+                    );
+
+                }
+
+            };
+
+
+
+        /* ==========================================
+           NÚT BẮT ĐẦU
+        ========================================== */
+
+        button.addEventListener(
+            "click",
+            async () => {
+
+                try {
+
+
+                    /* ==============================
+                       1. XIN QUYỀN THÔNG BÁO
+                    ============================== */
+
+                    await
+                        requestNotificationPermission();
+
+
+
+                    /* ==============================
+                       2. KHỞI ĐỘNG MICROPHONE
+                    ============================== */
+
+                    const {
+                        analyser
+                    } =
+                        await
+                        startMicrophone();
+
+
+
+                    /* ==============================
+                       3. CẬP NHẬT TRẠNG THÁI
+                    ============================== */
+
+                    statusText.textContent =
+                        "Đang lắng nghe";
+
+
+                    statusDot.classList.add(
+                        "online"
+                    );
+
+
+                    button.disabled =
+                        true;
+
+
+                    button.textContent =
+                        "🎤 Đang lắng nghe...";
+
+
+
+                    /* ==============================
+                       4. BẮT ĐẦU REALTIME LISTENER
+                    ============================== */
+
+                    startSoundListener(
+                        showSoundNotification
+                    );
+
+
+
+                    /* ==============================
+                       5. BẮT ĐẦU PHÂN TÍCH AUDIO
+                    ============================== */
+
+                    function updateAudio() {
+
+
+                        /*
+                         * analyzer.js hiện tại
+                         * tự phân tích microphone
+                         * và tự gọi:
+                         *
+                         * window.onAudioLevel()
+                         *
+                         * khi có dữ liệu.
+                         */
+
+                        analyzeAudio(
+                            analyser
+                        );
+
+
+                        requestAnimationFrame(
+                            updateAudio
+                        );
+
+                    }
+
+
+                    updateAudio();
+
+
+                }
+
+
+                catch (error) {
+
+
+                    /* ==============================
+                       XỬ LÝ LỖI
+                    ============================== */
+
+                    console.error(
+                        "Baby Monitor error:",
+                        error
+                    );
+
+
+                    statusText.textContent =
+                        "Không thể khởi động";
+
+
+                    statusDot.classList.remove(
+                        "online"
+                    );
+
+
+                    button.disabled =
+                        false;
+
+
+                    button.textContent =
+                        "🎤 Thử lại";
+
+
+                    alert(
+                        "Không thể khởi động Baby Monitor.\n\n" +
+                        "Hãy kiểm tra quyền microphone " +
+                        "và thông báo của trình duyệt."
+                    );
+
+                }
+
+            }
+        );
+
+    </script>
 
 </body>
 
