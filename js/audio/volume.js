@@ -4,10 +4,12 @@ export function getVolumeLevel(rms) {
         return 0;
     }
 
-    const db =
-        20 * Math.log10(rms);
+    const db = 20 * Math.log10(rms);
 
-    return Math.max(0, Math.min(100, db + 60));
+    // Chuyển khoảng âm thanh tương đối thành thang 0–100
+    const level = db + 60;
+
+    return Math.max(0, Math.min(100, level));
 }
 
 
