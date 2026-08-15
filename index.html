@@ -44,40 +44,110 @@
 
     </main>
 
-    <script type="module">
-        import { startMicrophone } from "./js/audio/microphone.js";
 
-        const button = document.getElementById("startButton");
-        const statusText = document.getElementById("statusText");
-        const statusDot = document.getElementById("statusDot");
+    <script type="module">
+
+        import { startMicrophone }
+            from "./js/audio/microphone.js";
+
+        import { analyzeAudio }
+            from "./js/audio/analyzer.js";
+
+        import {
+            getVolumeLevel,
+            classifyVolume
+        } from "./js/audio/volume.js";
+
+
+        const button =
+            document.getElementById("startButton");
+
+        const statusText =
+            document.getElementById("statusText");
+
+        const statusDot =
+            document.getElementById("statusDot");
+
+        const volumeBar =
+            document.getElementById("volumeBar");
+
+        const volumeValue =
+            document.getElementById("volumeValue");
+
+        const soundLevel =
+            document.getElementById("soundLevel");
+
 
         button.addEventListener("click", async () => {
 
             try {
 
-                await startMicrophone();
+                const { analyser } =
+                    await startMicrophone();
 
-                statusText.textContent = "Đang lắng nghe";
+
+                statusText.textContent =
+                    "Đang lắng nghe";
+
                 statusDot.classList.add("online");
 
                 button.disabled = true;
-                button.textContent = "🎤 Đang lắng nghe...";
+
+                button.textContent =
+                    "🎤 Đang lắng nghe...";
+
+
+                function updateAudio() {
+
+                    const rms =
+                        analyzeAudio(analyser);
+
+
+                    const level =
+                        getVolumeLevel(rms);
+
+
+                    const classification =
+                        classifyVolume(level);
+
+
+                    volumeBar.style.width =
+                        `${level}%`;
+
+
+                    volumeValue.textContent =
+                        Math.round(level);
+
+
+                    soundLevel.textContent =
+                        classification;
+
+
+                    requestAnimationFrame(updateAudio);
+                }
+
+
+                updateAudio();
+
 
             } catch (error) {
 
                 console.error(error);
 
-                statusText.textContent = "Không thể sử dụng microphone";
+                statusText.textContent =
+                    "Không thể sử dụng microphone";
+
                 statusDot.classList.remove("online");
 
                 alert(
                     "Không thể sử dụng microphone. " +
-                    "Hãy kiểm tra quyền microphone của trình duyệt."
+                    "Hãy kiểm tra quyền microphone."
                 );
 
             }
 
         });
+
     </script>
 
 </body>
